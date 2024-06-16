@@ -12,23 +12,15 @@ with st.form('reg_paper'):
 if submitted_reg_paper and comp_id:
     wcif = get_wcif(comp_id)
     finished_data = sort_competitors(wcif)
-    returner_pdf_path, first_timer_pdf_path = gen.generate_pdf(comp_id, finished_data)
+    merged_pdf_path = gen.generate_pdf(comp_id, finished_data)
 
-    st.write('Click the links below to download the generated PDF files.')
+    st.write('Click the button below to download the generated PDF file.')
 
-    with open(returner_pdf_path, "rb") as returner_pdf_file:
+    with open(merged_pdf_path, 'rb') as merged_pdf_file:
         st.download_button(
-            label="Download Returner PDF",
-            data=returner_pdf_file.read(),
-            file_name="returner.pdf",
-            mime="application/pdf"
-        )
-
-    with open(first_timer_pdf_path, "rb") as first_timer_pdf_file:
-        st.download_button(
-            label="Download First Timer PDF",
-            data=first_timer_pdf_file.read(),
-            file_name="first_timer.pdf",
-            mime="application/pdf"
+            label=f'Download {finished_data[0]} PDF',
+            data=merged_pdf_file.read(),
+            file_name=f'{comp_id}-reg-table-all.pdf',
+            mime='application/pdf'
         )
     

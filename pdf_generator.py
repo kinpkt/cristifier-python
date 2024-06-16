@@ -5,16 +5,18 @@ from reportlab.lib.units import cm
 from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
+from PyPDF2 import PdfReader, PdfWriter
 import tempfile
 
 # Register the font
 pdfmetrics.registerFont(TTFont('THSarabunNew-Bold', 'THSarabunNew Bold.ttf'))
 
 class PDFGenerator:
-    def __init__(self, filename, data, comp_name):
+    def __init__(self, filename, data, comp_name, type):
         self.filename = filename
         self.data = data
         self.comp_name = comp_name
+        self.type = type
 
     def create_pdf(self):
         pdf = SimpleDocTemplate(
@@ -74,16 +76,28 @@ class PDFGenerator:
     def add_header(self, canvas, doc):
         canvas.saveState()
         canvas.setFont('THSarabunNew-Bold', 16)
-        canvas.drawString(2*cm, A4[1] - 30, f'{self.comp_name} - Registration Table Page {canvas.getPageNumber()}')
+        canvas.drawString(2*cm, A4[1] - 30, f'{self.comp_name} - Registration Paper ({self.type}) Page {canvas.getPageNumber()}')
         canvas.restoreState()
 
+def merge_pdfs(pdf_paths, output_path):
+    pdf_writer = PdfWriter()
+
+    for path in pdf_paths:
+        pdf_reader = PdfReader(path)
+        for page in range(len(pdf_reader.pages)):
+            pdf_writer.add_page(pdf_reader.pages[page])
+
+    with open(output_path, 'wb') as out:
+        pdf_writer.write(out)
 
 def generate_pdf(comp_id, data):
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as returner_file, tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as first_timer_file:
-        returner_pdf = PDFGenerator(returner_file.name, data[2], data[0])
-        first_timer_pdf = PDFGenerator(first_timer_file.name, data[1], data[0])
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as returner_file, tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as first_timer_file, tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as merged_file:
+        returner_pdf = PDFGenerator(returner_file.name, data[2], data[0], 'Returners')
+        first_timer_pdf = PDFGenerator(first_timer_file.name, data[1], data[0], 'First-timers')
 
         returner_pdf.create_pdf()
         first_timer_pdf.create_pdf()
 
-        return returner_file.name, first_timer_file.name
+        merge_pdfs([returner_file.name, first_timer_file.name], merged_file.name)
+
+        return merged_file.name
