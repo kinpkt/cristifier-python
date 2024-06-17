@@ -16,6 +16,8 @@ if submitted_reg_paper and comp_id:
 
     st.write('Click the button below to download the generated PDF file.')
 
+    print(merged_pdf_path)
+
     with open(merged_pdf_path, 'rb') as merged_pdf_file:
         st.download_button(
             label=f'Download {finished_data[0]} PDF',
